@@ -1,7 +1,7 @@
 {
   "name": "gather-auto-teleport",
   "version": "0.0.1",
-  "description": "",
+  "description": "Automatic teleportation",
   "background": {
     "service_worker": "background.js"
   },
@@ -24,7 +24,7 @@
   "web_accessible_resources": [
     {
       "resources": ["inject.js", "content.js"],
-      "matches": ["https://*/*"]
+      "matches": ["https://app.gather.town/*"]
     }
   ]
 }

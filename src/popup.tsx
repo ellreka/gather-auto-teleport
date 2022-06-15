@@ -129,7 +129,7 @@ export function Popup() {
     const target = getTargetTime()
     chrome.alarms.create(name, {
       when: target.valueOf(),
-      periodInMinutes: 1
+      periodInMinutes: 1440
     })
     setList((prev) => {
       return {
@@ -170,7 +170,7 @@ export function Popup() {
           })
           break
       }
-      return true
+      // return true
     })
   }, [])
 
