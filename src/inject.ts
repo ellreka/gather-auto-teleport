@@ -24,7 +24,6 @@ const fnc = (event: any) => {
 window.addEventListener('message', fnc, false)
 
 chrome.runtime.onMessage.addListener((request, sender) => {
-  console.log({ request })
   window.postMessage(
     { type: 'FROM_INJECT', action: request.action, data: request.data },
     '*'

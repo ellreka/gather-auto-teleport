@@ -5,12 +5,15 @@ import {
   TrashIcon,
   PencilAltIcon,
   PlayIcon,
+  PauseIcon,
   PlusCircleIcon,
   FlagIcon
 } from '@heroicons/react/outline'
 import { useForm } from 'react-hook-form'
 import { ACTIONS, getTabId } from './utils'
-
+import dayjs from 'dayjs'
+import clsx from 'clsx'
+import { usePersist } from './hooks/usePersist'
 type Data = {
   name: string
   position: {
@@ -18,21 +21,17 @@ type Data = {
     y: number
   }
   mapId: string
+  timer?: {
+    hour: number
+    minute: number
+  }
+  isPlaying: boolean
 }
 
 export function Popup() {
-  const [list, setList] = useState<{
+  const [list, setList] = usePersist<{
     [key: number]: Data
-  }>({
-    1: {
-      name: 'Meeting',
-      position: {
-        x: 5,
-        y: 29
-      },
-      mapId: 'rw-12'
-    }
-  })
+  }>('list', {})
   const [tmpData, setTmpData] = useState<Data | undefined>(undefined)
   const [editingId, setEditingId] = useState<number | undefined>(undefined)
   const [current, setCurrent] = useState<
@@ -55,8 +54,9 @@ export function Popup() {
     setList((prev) => {
       const cloneObj = Object.assign({}, prev)
       delete cloneObj[id]
-      return { ...cloneObj }
+      return cloneObj
     })
+    clearTimer(id)
   }
 
   const handleSave = (id: number, data: Data) => {
@@ -64,7 +64,18 @@ export function Popup() {
     setEditingId(undefined)
     setCurrent(undefined)
     setList((prev) => {
-      return { ...prev, [id === 0 ? Date.now() : id]: data }
+      if (
+        prev?.[id]?.timer?.hour !== data.timer?.hour ||
+        prev?.[id]?.timer?.minute !== data.timer?.minute
+      ) {
+        clearTimer(id)
+        return {
+          ...prev,
+          [id === 0 ? Date.now() : id]: { ...data, isPlaying: false }
+        }
+      } else {
+        return { ...prev, [id === 0 ? Date.now() : id]: data }
+      }
     })
   }
 
@@ -84,9 +95,73 @@ export function Popup() {
     }
   }
 
+  const handleAdd = async () => {
+    setEditingId(undefined)
+    setTmpData({
+      name: '',
+      mapId: '',
+      position: {
+        x: 0,
+        y: 0
+      },
+      isPlaying: false
+    })
+    await getCurrent()
+  }
+
+  const startTimer = (id: number, timer: Data['timer']) => {
+    if (timer == null) return
+    const name = String(id)
+    const getTargetTime = () => {
+      const now = dayjs()
+      const target = now
+        .set('hour', timer.hour)
+        .set('minute', timer.minute)
+        .set('second', 0)
+        .set('millisecond', 0)
+      const diff = target.diff(now)
+      if (diff < 0) {
+        return target.add(1, 'day')
+      } else {
+        return target
+      }
+    }
+    const target = getTargetTime()
+    chrome.alarms.create(name, {
+      when: target.valueOf(),
+      periodInMinutes: 1
+    })
+    setList((prev) => {
+      return {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          isPlaying: true
+        }
+      }
+    })
+  }
+
+  const clearTimer = (id: number) => {
+    const name = String(id)
+    chrome.alarms.clear(name)
+  }
+
+  const stopTimer = (id: number) => {
+    clearTimer(id)
+    setList((prev) => {
+      return {
+        ...prev,
+        [id]: {
+          ...prev[id],
+          isPlaying: false
+        }
+      }
+    })
+  }
+
   useEffect(() => {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      console.log({ request })
       switch (request.action) {
         case ACTIONS.GET_CURRENT_POSITION:
           setCurrent({
@@ -99,30 +174,18 @@ export function Popup() {
     })
   }, [])
 
-  const handleAdd = async () => {
-    setEditingId(undefined)
-    setTmpData({
-      name: '',
-      mapId: '',
-      position: {
-        x: 0,
-        y: 0
-      }
-    })
-    await getCurrent()
-  }
-
   return (
-    <div className="px-2 py-5 w-[520px] bg-gray-500 space-y-5">
+    <div className="px-2 py-5 w-[520px] bg-neutral space-y-5">
       <div className="w-full gap-3 flex flex-col">
         {Object.entries(list).map(([key, value]) => {
           const id = Number(key)
+          const isEdit = editingId === id
           return (
             <Item
-              key={id}
+              key={`${id}_${isEdit}`}
               id={id}
               data={value}
-              isEdit={editingId === id}
+              isEdit={isEdit}
               current={current}
               onClick={onClick}
               onEdit={() => handleEdit(id)}
@@ -130,6 +193,8 @@ export function Popup() {
               onSave={(data) => handleSave(id, data)}
               onCancel={() => handleCancel()}
               getCurrent={getCurrent}
+              onStartTimer={startTimer}
+              onStopTimer={stopTimer}
             />
           )
         })}
@@ -149,12 +214,12 @@ export function Popup() {
         />
       ) : (
         <button
-          className="btn btn-block btn-outline gap-2 text-black"
+          className="btn btn-block btn-outline gap-2"
           onClick={async () => {
             await getCurrent()
             handleAdd()
           }}>
-          <PlusCircleIcon className="text-black w-5 h-5" />
+          <PlusCircleIcon className="w-5 h-5" />
           Add
         </button>
       )}
@@ -173,6 +238,8 @@ type ItemProps = {
   onSave: (data: Data) => void
   onCancel: () => void
   getCurrent: () => Promise<void>
+  onStartTimer?: (id: number, timer: Data['timer']) => void
+  onStopTimer?: (id: number) => void
 }
 
 const Item: FC<ItemProps> = ({
@@ -185,7 +252,9 @@ const Item: FC<ItemProps> = ({
   onDelete,
   onSave,
   onCancel,
-  getCurrent
+  getCurrent,
+  onStartTimer,
+  onStopTimer
 }) => {
   const {
     register,
@@ -198,13 +267,14 @@ const Item: FC<ItemProps> = ({
     defaultValues: data
   })
 
+  console.table(data)
+
   useEffect(() => {
     setValue('mapId', current?.mapId ?? data.mapId)
     setValue('position', current?.position ?? data.position)
   }, [current])
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data)
     onSave(data)
   })
   const handleClickCurrent = async () => {
@@ -219,19 +289,19 @@ const Item: FC<ItemProps> = ({
     <>
       {isEdit ? (
         <div key={id}>
-          <div className="bg-gray-300 w-full flex items-center p-3 rounded-md border-gray-500 border">
+          <div className="bg-base-100 text-neutral-content w-full flex items-center p-3 rounded-md border-neutral-content border">
             <div className="flex flex-col gap-2 w-full">
               <input
                 type="text"
                 placeholder="MTG"
-                className="input input-ghost input-xs text-black text-sm"
+                className="input input-bordered input-xs text-sm"
                 {...register('name', { required: true, maxLength: 20 })}
               />
-              <div className="text-black text-sm">
+              <div className="text-sm">
                 <span>X: </span>
                 <input
                   type="number"
-                  className="input input-ghost input-xs max-w-[5em]"
+                  className="input input-bordered input-xs max-w-[6em]"
                   {...register('position.x', {
                     required: true,
                     valueAsNumber: true
@@ -240,7 +310,7 @@ const Item: FC<ItemProps> = ({
                 <span className="ml-3">Y: </span>
                 <input
                   type="number"
-                  className="input input-ghost input-xs max-w-[5em]"
+                  className="input input-bordered input-xs max-w-[6em]"
                   {...register('position.y', {
                     required: true,
                     valueAsNumber: true
@@ -249,7 +319,7 @@ const Item: FC<ItemProps> = ({
                 <span className="ml-3">Map: </span>
                 <input
                   type="text"
-                  className="input input-ghost input-xs"
+                  className="input input-bordered input-xs"
                   {...register('mapId', { required: true })}
                 />
                 <button
@@ -258,13 +328,39 @@ const Item: FC<ItemProps> = ({
                   current
                 </button>
               </div>
+              <div className="text-sm">
+                <span>Timer: </span>
+                <input
+                  type="number"
+                  className="input input-bordered input-xs max-w-[6em]"
+                  {...register('timer.hour', {
+                    required: false,
+                    valueAsNumber: true,
+                    min: 1,
+                    max: 23,
+                    maxLength: 2
+                  })}
+                />
+                <span> : </span>
+                <input
+                  type="number"
+                  className="input input-bordered input-xs max-w-[6em]"
+                  {...register('timer.minute', {
+                    required: false,
+                    valueAsNumber: true,
+                    min: 0,
+                    max: 59,
+                    maxLength: 2
+                  })}
+                />
+              </div>
             </div>
           </div>
           <div className="flex gap-2 mt-1">
             <input
               type="submit"
               value="Save"
-              className="btn btn-sm btn-outline btn-accent"
+              className="btn btn-sm btn-outline btn-primary"
               onClick={onSubmit}
             />
             <button className="btn btn-outline btn-sm" onClick={handleCancel}>
@@ -273,32 +369,70 @@ const Item: FC<ItemProps> = ({
           </div>
         </div>
       ) : (
-        <div className="bg-gray-300 w-full h-12 flex items-center p-3 rounded-md hover:bg-gray-200 duration-75">
-          <button
-            className="btn btn-circle btn-ghost btn-sm mr-2"
-            onClick={() => {
-              onClick?.(data)
-            }}>
-            <FlagIcon className="text-black w-5 h-5" />
-          </button>
-          <p className="font-bold text-sm text-black">{data.name}</p>
+        <div
+          className={clsx(
+            'w-full h-12 flex items-center p-3 rounded-md duration-75  bg-base-100 text-neutral-content',
+            data.isPlaying
+              ? 'border-2 border-success'
+              : 'border border-neutral-content'
+          )}>
+          <div className="tooltip tooltip-bottom" data-tip="Teleport">
+            <button
+              className="btn btn-circle btn-ghost btn-sm mr-2"
+              onClick={() => {
+                onClick?.(data)
+              }}>
+              <FlagIcon className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="font-bold text-sm">{data.name}</p>
           <div className="ml-auto flex items-center gap-1">
-            <div className="flex items-center">
-              <button className="btn btn-circle btn-ghost btn-sm">
-                <PlayIcon className="text-black w-5 h-5" />
+            {data.timer?.hour != null &&
+              data.timer?.minute != null &&
+              !Number.isNaN(data.timer.hour) &&
+              !Number.isNaN(data.timer.minute) && (
+                <div className="flex items-center gap-2">
+                  {data.isPlaying ? (
+                    <div
+                      className="tooltip tooltip-bottom"
+                      data-tip="Stop Timer">
+                      <button
+                        className="btn btn-circle btn-ghost btn-sm"
+                        onClick={() => onStopTimer?.(id)}>
+                        <PauseIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className="tooltip tooltip-bottom"
+                      data-tip="Start Timer">
+                      <button
+                        className="btn btn-circle btn-ghost btn-sm"
+                        onClick={() => onStartTimer?.(id, data.timer)}>
+                        <PlayIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                  <p className="font-bold text-sm mr-2">
+                    {String(data.timer.hour).padStart(2, '0')}:
+                    {String(data.timer.minute).padStart(2, '0')}
+                  </p>
+                </div>
+              )}
+            <div className="tooltip tooltip-bottom" data-tip="Edit">
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={onEdit}>
+                <PencilAltIcon className="w-5 h-5" />
               </button>
-              <p className="font-bold text-sm text-black">13:00</p>
             </div>
-            <button
-              className="btn btn-circle btn-ghost btn-sm"
-              onClick={onEdit}>
-              <PencilAltIcon className="text-black w-5 h-5" />
-            </button>
-            <button
-              className="btn btn-circle btn-ghost btn-sm"
-              onClick={onDelete}>
-              <TrashIcon className="text-black w-5 h-5" />
-            </button>
+            <div className="tooltip tooltip-bottom" data-tip="Delete">
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={onDelete}>
+                <TrashIcon className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -4,9 +4,11 @@ export const ACTIONS = {
 } as const
 
 export const getTabId = async () => {
-  const tabs = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
+  const tabs = await chrome.tabs.query({})
+  const targetTab = tabs.find((tab) => {
+    if (tab.url == null) return false
+    const url = new URL(tab.url)
+    return url.hostname === 'app.gather.town'
   })
-  return tabs.length > 0 ? tabs[0].id : null
+  return targetTab?.id ?? undefined
 }

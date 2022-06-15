@@ -40,7 +40,7 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.js', '.ts']
+    extensions: ['.js', '.ts', '.tsx']
   },
   devtool: 'cheap-module-source-map',
   plugins: [
