@@ -1,0 +1,8 @@
+{
+  "include": ["src"],
+  "extends": "@ellreka/configs/tsconfig",
+  "compilerOptions": {
+    "target": "ES6",
+    "isolatedModules": false
+  }
+}

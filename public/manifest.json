@@ -1,0 +1,30 @@
+{
+  "name": "gather-auto-teleport",
+  "version": "0.0.1",
+  "description": "",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://app.gather.town/*"],
+      "js": ["inject.js"]
+    }
+  ],
+  "icons": {
+    "128": "icon-128.png"
+  },
+  "manifest_version": 3,
+  "permissions": ["tabs", "alarms", "scripting"],
+  "host_permissions": ["https://app.gather.town/"],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js", "content.js"],
+      "matches": ["https://*/*"]
+    }
+  ]
+}
