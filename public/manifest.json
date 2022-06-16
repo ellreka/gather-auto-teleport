@@ -20,7 +20,6 @@
   },
   "manifest_version": 3,
   "permissions": ["tabs", "alarms", "storage"],
-  "host_permissions": ["https://app.gather.town/"],
   "web_accessible_resources": [
     {
       "resources": ["inject.js", "content.js"],
