@@ -27,6 +27,7 @@ export function Popup() {
   const [current, setCurrent] = useState<
     Pick<Data, 'mapId' | 'position'> | undefined
   >(undefined)
+  const [error, setError] = useState<string | undefined>(undefined)
 
   const onClick = async (data: Data) => {
     const tabId = await getTabId()
@@ -81,10 +82,20 @@ export function Popup() {
   const getCurrent = async () => {
     const tabId = await getTabId()
     if (tabId != null) {
-      chrome.tabs.sendMessage(tabId, {
-        action: ACTIONS.GET_CURRENT_POSITION,
-        data: {}
-      })
+      chrome.tabs.sendMessage(
+        tabId,
+        {
+          action: ACTIONS.GET_CURRENT_POSITION,
+          data: {}
+        },
+        (response) => {
+          if (response == null) {
+            setError('Could not connected. please reload gather.town.')
+          } else {
+            setError(undefined)
+          }
+        }
+      )
     }
   }
 
@@ -161,6 +172,7 @@ export function Popup() {
 
   return (
     <div className="px-2 py-5 w-[520px] bg-neutral space-y-5">
+      {error && <div className="text-error font-semibold text-sm">{error}</div>}
       <div className="w-full gap-3 flex flex-col">
         {Object.entries(list).map(([key, value]) => {
           const id = Number(key)
