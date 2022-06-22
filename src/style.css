@@ -7,3 +7,7 @@
 input:focus {
   outline: none;
 }
+
+.btn {
+  text-transform: none;
+}

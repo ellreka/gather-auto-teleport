@@ -10,23 +10,13 @@ import {
   FlagIcon
 } from '@heroicons/react/outline'
 import { useForm } from 'react-hook-form'
-import { ACTIONS, getTabId } from './utils'
+import { ACTIONS, getNextDate, getTabId } from './utils'
 import dayjs from 'dayjs'
 import clsx from 'clsx'
 import { usePersist } from './hooks/usePersist'
-type Data = {
-  name: string
-  position: {
-    x: number
-    y: number
-  }
-  mapId: string
-  timer?: {
-    hour: number
-    minute: number
-  }
-  isPlaying: boolean
-}
+import { Data } from './types'
+
+const daysList = [0, 1, 2, 3, 4, 5, 6] as const
 
 export function Popup() {
   const [list, setList] = usePersist<{
@@ -44,6 +34,7 @@ export function Popup() {
       chrome.tabs.sendMessage(tabId, { action: ACTIONS.TELEPORT, data })
     }
   }
+
   const handleEdit = (id: number) => {
     setTmpData(undefined)
     setCurrent(undefined)
@@ -66,7 +57,9 @@ export function Popup() {
     setList((prev) => {
       if (
         prev?.[id]?.timer?.hour !== data.timer?.hour ||
-        prev?.[id]?.timer?.minute !== data.timer?.minute
+        prev?.[id]?.timer?.minute !== data.timer?.minute ||
+        JSON.stringify(prev?.[id]?.timer?.days) !==
+          JSON.stringify(data.timer?.days)
       ) {
         clearTimer(id)
         return {
@@ -111,25 +104,17 @@ export function Popup() {
 
   const startTimer = (id: number, timer: Data['timer']) => {
     if (timer == null) return
+    if (!timer.days.length) return
     const name = String(id)
-    const getTargetTime = () => {
-      const now = dayjs()
-      const target = now
-        .set('hour', timer.hour)
-        .set('minute', timer.minute)
-        .set('second', 0)
-        .set('millisecond', 0)
-      const diff = target.diff(now)
-      if (diff < 0) {
-        return target.add(1, 'day')
-      } else {
-        return target
-      }
-    }
-    const target = getTargetTime()
+
+    const target = getNextDate({
+      hour: timer.hour,
+      minute: timer.minute,
+      days: timer.days
+    })
+    console.log(target.format())
     chrome.alarms.create(name, {
-      when: target.valueOf(),
-      periodInMinutes: 1440
+      when: target.valueOf()
     })
     setList((prev) => {
       return {
@@ -261,6 +246,7 @@ const Item: FC<ItemProps> = ({
     handleSubmit,
     setValue,
     reset,
+    watch,
     formState: { errors }
   } = useForm({
     mode: 'onBlur',
@@ -284,6 +270,17 @@ const Item: FC<ItemProps> = ({
   const handleCancel = () => {
     reset()
     onCancel()
+  }
+
+  const handleSelectDay = (day: typeof daysList[number]) => {
+    const s = new Set(watch('timer.days') ?? [])
+    if (s.has(day)) {
+      s.delete(day)
+    } else {
+      s.add(day)
+    }
+    const arr = Array.from(s).sort((a, b) => a - b)
+    setValue('timer.days', arr)
   }
   return (
     <>
@@ -353,6 +350,22 @@ const Item: FC<ItemProps> = ({
                     maxLength: 2
                   })}
                 />
+                <div className="inline-flex items-center gap-1 ml-2">
+                  {daysList.map((i) => {
+                    return (
+                      <button
+                        key={i}
+                        className={clsx(
+                          'btn btn-circle btn-xs',
+                          (watch('timer.days') ?? []).includes(i) &&
+                            'btn-primary'
+                        )}
+                        onClick={() => handleSelectDay(i)}>
+                        {dayjs().day(i).format('dd')}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
