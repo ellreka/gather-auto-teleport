@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "rimraf build && webpack --mode development --watch",
     "build": "rimraf build && NODE_ENV=production webpack --mode production",
-    "build:zip": "yarn build && zip -r build.zip build/"
+    "build:zip": "yarn build && zip -r build.zip build/",
+    "test": "yarn vitest run",
+    "test:watch": "yarn vitest"
   },
   "devDependencies": {
     "@ellreka/configs": "^1.1.14",
