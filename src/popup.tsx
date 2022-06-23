@@ -108,13 +108,16 @@ export function Popup() {
         x: 0,
         y: 0
       },
+      timer: {
+        days: [1, 2, 3, 4, 5]
+      },
       isPlaying: false
     })
     await getCurrent()
   }
 
   const startTimer = (id: number, timer: Data['timer']) => {
-    if (timer == null) return
+    if (timer == null || timer.hour == null || timer.minute == null) return
     if (!timer.days.length) return
     const name = String(id)
 

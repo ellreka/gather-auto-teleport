@@ -1,6 +1,6 @@
 {
   "name": "Gather Auto Teleport",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Automatic teleportation",
   "background": {
     "service_worker": "background.js"
