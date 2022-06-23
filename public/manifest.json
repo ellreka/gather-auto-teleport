@@ -1,7 +1,7 @@
 {
   "name": "Gather Auto Teleport",
-  "version": "0.0.3",
-  "description": "Automatic teleportation",
+  "version": "1.0.0",
+  "description": "Automatic teleportation extension for gather.town.",
   "background": {
     "service_worker": "background.js"
   },
