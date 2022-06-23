@@ -2,6 +2,12 @@
 
 Automatic teleportation extension for gather.town.
 
+https://user-images.githubusercontent.com/28590054/175311370-1aea018c-9899-4e25-bb8a-48ec759d6487.mov
+
+
+
+
+
 ## Features
 
 - Teleport to a specified location.
