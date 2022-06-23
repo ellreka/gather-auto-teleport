@@ -12,8 +12,14 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (tabId != null) {
       chrome.tabs.sendMessage(tabId, { action: ACTIONS.TELEPORT, data })
       console.log(data)
-      if (data.timer == null) return
-      const target = getNextDate(data.timer)
+      const { timer } = data
+      if (timer == null || timer.hour == null || timer.minute == null) return
+      if (!timer.days.length) return
+      const target = getNextDate({
+        hour: timer.hour,
+        minute: timer.minute,
+        days: timer.days
+      })
       console.log(target.format())
       chrome.alarms.create(alarm.name, {
         when: target.valueOf()

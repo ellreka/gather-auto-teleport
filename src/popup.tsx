@@ -415,8 +415,10 @@ const Item: FC<ItemProps> = ({
           </div>
           <p className="font-bold text-sm">{data.name}</p>
           <div className="ml-auto flex items-center gap-1">
-            {data.timer?.hour != null &&
-              data.timer?.minute != null &&
+            {data.timer != null &&
+              data.timer.hour != null &&
+              data.timer.minute != null &&
+              data.timer.days.length > 0 &&
               !Number.isNaN(data.timer.hour) &&
               !Number.isNaN(data.timer.minute) && (
                 <div className="flex items-center gap-2">
@@ -441,10 +443,22 @@ const Item: FC<ItemProps> = ({
                       </button>
                     </div>
                   )}
-                  <p className="font-bold text-sm mr-2">
-                    {String(data.timer.hour).padStart(2, '0')}:
-                    {String(data.timer.minute).padStart(2, '0')}
-                  </p>
+                  <div className="flex flex-col items-end mr-2">
+                    <p className="font-bold text-sm">
+                      {String(data.timer.hour).padStart(2, '0')}:
+                      {String(data.timer.minute).padStart(2, '0')}
+                    </p>
+                    <div className="flex gap-1">
+                      {data.timer.days.map((d, index) => (
+                        <span key={d} className="text-[10px]">
+                          {dayjs().day(d).format('dd')}
+                          {data.timer != null &&
+                            data.timer.days.length - 1 !== index &&
+                            ','}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
             <div className="tooltip tooltip-bottom" data-tip="Edit">
