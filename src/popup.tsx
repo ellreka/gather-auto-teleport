@@ -32,7 +32,17 @@ export function Popup() {
   const onClick = async (data: Data) => {
     const tabId = await getTabId()
     if (tabId != null) {
-      chrome.tabs.sendMessage(tabId, { action: ACTIONS.TELEPORT, data })
+      chrome.tabs.sendMessage(
+        tabId,
+        { action: ACTIONS.TELEPORT, data },
+        (response) => {
+          if (response == null) {
+            setError('Could not connected. please reload gather.town.')
+          } else {
+            setError(undefined)
+          }
+        }
+      )
     }
   }
 
@@ -404,15 +414,6 @@ const Item: FC<ItemProps> = ({
               ? 'border-2 border-success'
               : 'border border-neutral-content'
           )}>
-          <div className="tooltip tooltip-bottom" data-tip="Teleport">
-            <button
-              className="btn btn-circle btn-ghost btn-sm mr-2"
-              onClick={() => {
-                onClick?.(data)
-              }}>
-              <FlagIcon className="w-5 h-5" />
-            </button>
-          </div>
           <p className="font-bold text-sm">{data.name}</p>
           <div className="ml-auto flex items-center gap-1">
             {data.timer != null &&
@@ -422,6 +423,22 @@ const Item: FC<ItemProps> = ({
               !Number.isNaN(data.timer.hour) &&
               !Number.isNaN(data.timer.minute) && (
                 <div className="flex items-center gap-2">
+                  <div className="flex flex-col items-end mr-2">
+                    <p className="font-bold text-sm">
+                      {String(data.timer.hour).padStart(2, '0')}:
+                      {String(data.timer.minute).padStart(2, '0')}
+                    </p>
+                    <div className="flex gap-1">
+                      {data.timer.days.map((d, index) => (
+                        <span key={d} className="text-[10px]">
+                          {dayjs().day(d).format('dd')}
+                          {data.timer != null &&
+                            data.timer.days.length - 1 !== index &&
+                            ','}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                   {data.isPlaying ? (
                     <div
                       className="tooltip tooltip-bottom"
@@ -443,24 +460,17 @@ const Item: FC<ItemProps> = ({
                       </button>
                     </div>
                   )}
-                  <div className="flex flex-col items-end mr-2">
-                    <p className="font-bold text-sm">
-                      {String(data.timer.hour).padStart(2, '0')}:
-                      {String(data.timer.minute).padStart(2, '0')}
-                    </p>
-                    <div className="flex gap-1">
-                      {data.timer.days.map((d, index) => (
-                        <span key={d} className="text-[10px]">
-                          {dayjs().day(d).format('dd')}
-                          {data.timer != null &&
-                            data.timer.days.length - 1 !== index &&
-                            ','}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
+            <div className="tooltip tooltip-bottom" data-tip="Teleport">
+              <button
+                className="btn btn-circle btn-ghost btn-sm"
+                onClick={() => {
+                  onClick?.(data)
+                }}>
+                <FlagIcon className="w-5 h-5" />
+              </button>
+            </div>
             <div className="tooltip tooltip-bottom" data-tip="Edit">
               <button
                 className="btn btn-circle btn-ghost btn-sm"
