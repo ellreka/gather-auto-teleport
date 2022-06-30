@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { Data } from './types'
 
 export const ACTIONS = {
   GET_CURRENT_POSITION: 'GET_CURRENT_POSITION',
@@ -6,13 +7,14 @@ export const ACTIONS = {
 } as const
 
 export const getTabId = async () => {
-  const tabs = await chrome.tabs.query({})
-  const targetTab = tabs.find((tab) => {
-    if (tab.url == null) return false
-    const url = new URL(tab.url)
-    return url.hostname === 'app.gather.town'
+  const tabs = await chrome.tabs.query({ url: 'https://app.gather.town/app/*' })
+  const tab = tabs.find((tab) => {
+    if (tab.url != null) {
+      const url = new URL(tab.url)
+      return url.pathname.match(/app\/.+/)
+    }
   })
-  return targetTab?.id ?? undefined
+  return tab?.id ?? undefined
 }
 
 export const getNextDate = ({
@@ -53,5 +55,19 @@ export const getNextDate = ({
     return target
   } else {
     return target.set('day', daysList[1])
+  }
+}
+
+export const teleport = (
+  tabId: number,
+  data: Data,
+  callback: (response: { isOk: boolean }) => void
+) => {
+  if (tabId != null) {
+    chrome.tabs.sendMessage(
+      tabId,
+      { action: ACTIONS.TELEPORT, data },
+      (response) => callback({ isOk: response != null })
+    )
   }
 }

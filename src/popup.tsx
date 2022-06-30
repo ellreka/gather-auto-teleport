@@ -10,7 +10,7 @@ import {
   FlagIcon
 } from '@heroicons/react/outline'
 import { useForm } from 'react-hook-form'
-import { ACTIONS, getNextDate, getTabId } from './utils'
+import { ACTIONS, getNextDate, getTabId, teleport } from './utils'
 import dayjs from 'dayjs'
 import clsx from 'clsx'
 import { usePersist } from './hooks/usePersist'
@@ -32,17 +32,13 @@ export function Popup() {
   const onClick = async (data: Data) => {
     const tabId = await getTabId()
     if (tabId != null) {
-      chrome.tabs.sendMessage(
-        tabId,
-        { action: ACTIONS.TELEPORT, data },
-        (response) => {
-          if (response == null) {
-            setError('Could not connected. please reload gather.town.')
-          } else {
-            setError(undefined)
-          }
+      teleport(tabId, data, ({ isOk }) => {
+        if (isOk) {
+          setError(undefined)
+        } else {
+          setError('Could not connected. please reload gather.town.')
         }
-      )
+      })
     }
   }
 

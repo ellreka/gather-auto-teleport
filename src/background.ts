@@ -1,5 +1,5 @@
 import { Data } from './types'
-import { ACTIONS, getNextDate, getTabId } from './utils'
+import { ACTIONS, getNextDate, getTabId, teleport } from './utils'
 
 const key = 'gather-auto-teleport-list'
 
@@ -10,7 +10,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     const data: Data = item[Number(alarm.name)]
     const tabId = await getTabId()
     if (tabId != null) {
-      chrome.tabs.sendMessage(tabId, { action: ACTIONS.TELEPORT, data })
+      teleport(tabId, data, async ({ isOk }) => {
+        if (isOk) {
+          await chrome.tabs.update(tabId, { active: true })
+        } else {
+          console.error('teleport failed')
+        }
+      })
       console.log(data)
       const { timer } = data
       if (timer == null || timer.hour == null || timer.minute == null) return
