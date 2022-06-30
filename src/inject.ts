@@ -1,3 +1,4 @@
+import { Data } from './types'
 import { ACTIONS } from './utils'
 
 const head = document.head
@@ -5,7 +6,7 @@ const script = document.createElement('script')
 script.src = chrome.runtime.getURL('content.js')
 head.appendChild(script)
 
-const fnc = (event: any) => {
+const fnc = (event: MessageEvent) => {
   if (event.source != window) {
     return
   }
@@ -23,12 +24,21 @@ const fnc = (event: any) => {
 
 window.addEventListener('message', fnc, false)
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  window.postMessage(
-    { type: 'FROM_INJECT', action: request.action, data: request.data },
-    '*'
-  )
-  sendResponse(request)
-})
+chrome.runtime.onMessage.addListener(
+  (
+    request: {
+      action: keyof typeof ACTIONS
+      data: Data
+    },
+    sender,
+    sendResponse
+  ) => {
+    window.postMessage(
+      { type: 'FROM_INJECT', action: request.action, data: request.data },
+      '*'
+    )
+    sendResponse(request)
+  }
+)
 
 export {}
