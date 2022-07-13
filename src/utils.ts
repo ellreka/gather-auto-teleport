@@ -63,11 +63,10 @@ export const teleport = (
   data: Data,
   callback: (response: { isOk: boolean }) => void
 ) => {
-  if (tabId != null) {
+  console.log('teleport');
     chrome.tabs.sendMessage(
       tabId,
       { action: ACTIONS.TELEPORT, data },
       (response) => callback({ isOk: response != null })
     )
-  }
 }
