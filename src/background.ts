@@ -17,23 +17,25 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           console.error('teleport failed')
         }
       })
-      console.log(data)
-      const { timer } = data
-      if (timer == null || timer.hour == null || timer.minute == null) return
-      if (!timer.days.length) return
-      const target = getNextDate({
-        hour: timer.hour,
-        minute: timer.minute,
-        days: timer.days
-      })
-      chrome.alarms.create(alarm.name, {
-        when: target.valueOf()
-      })
-      chrome.alarms.get(alarm.name, (alarm) => {
-        const date = new Date(alarm.scheduledTime)
-        console.log('Next Date: ', date.toString())
-      })
+    } else {
+      console.error('tab not found')
     }
+    console.log(data)
+    const { timer } = data
+    if (timer == null || timer.hour == null || timer.minute == null) return
+    if (!timer.days.length) return
+    const target = getNextDate({
+      hour: timer.hour,
+      minute: timer.minute,
+      days: timer.days
+    })
+    chrome.alarms.create(alarm.name, {
+      when: target.valueOf()
+    })
+    chrome.alarms.get(alarm.name, (alarm) => {
+      const date = new Date(alarm.scheduledTime)
+      console.log('Next Date: ', date.toString())
+    })
   })
 })
 
