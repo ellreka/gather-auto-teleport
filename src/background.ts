@@ -1,5 +1,5 @@
 import { Data } from './types'
-import { ACTIONS, getNextDate, getTabId, teleport } from './utils'
+import { getNextDate, getTabId, notification, teleport } from './utils'
 
 const key = 'gather-auto-teleport-list'
 
@@ -14,11 +14,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         if (isOk) {
           await chrome.tabs.update(tabId, { active: true })
         } else {
-          console.error('teleport failed')
+          console.error('Teleportation failed')
+          notification('Teleportation failed')
         }
       })
     } else {
       console.error('tab not found')
+      notification('Teleportation failed\nGather.town tab not found')
     }
     console.log(data)
     const { timer } = data
@@ -41,12 +43,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log('installed')
-  // chrome.alarms.clearAll((wasCleared) => {
-  //   if (wasCleared) console.log('cleared')
-  // })
-  // chrome.storage.local.set({ [key]: {} }, () => {
-  //   console.log('added')
-  // })
 })
 
 export {}

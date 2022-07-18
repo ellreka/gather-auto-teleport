@@ -70,3 +70,14 @@ export const teleport = (
       (response) => callback({ isOk: response != null })
     )
 }
+
+export const notification = (message: string) => {
+  chrome.notifications.create('', {
+    type: 'basic',
+    iconUrl: 'icon-128.png',
+    title: 'Gather Auto Teleport',
+    message,
+  }, () => {
+    console.log('created notification')
+  }) 
+}

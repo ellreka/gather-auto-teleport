@@ -19,7 +19,7 @@
     "128": "icon-128.png"
   },
   "manifest_version": 3,
-  "permissions": ["tabs", "alarms", "storage"],
+  "permissions": ["tabs", "alarms", "storage", "notifications"],
   "web_accessible_resources": [
     {
       "resources": ["inject.js", "content.js"],
