@@ -354,7 +354,7 @@ const Item: FC<ItemProps> = ({
                   {...register('timer.hour', {
                     required: false,
                     valueAsNumber: true,
-                    min: 1,
+                    min: 0,
                     max: 23,
                     maxLength: 2
                   })}
