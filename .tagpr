@@ -32,4 +32,4 @@
 [tagpr]
 	vPrefix = true
 	releaseBranch = main
-	versionFile = package.json
+	versionFile = package.json,public/manifest.json
