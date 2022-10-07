@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.0.6](https://github.com/ellreka/gather-auto-teleport/compare/v1.0.5...v1.0.6) - 2022-10-07
+### Changed
+- ci: update tagpr version by @ellreka in https://github.com/ellreka/gather-auto-teleport/pull/11
+
 ## [v1.0.5](https://github.com/ellreka/gather-auto-teleport/compare/v1.0.4...v1.0.5) - 2022-09-22
 ### Changed
 - ci: add tagpr by @ellreka in https://github.com/ellreka/gather-auto-teleport/pull/9
